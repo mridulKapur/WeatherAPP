@@ -7,17 +7,15 @@ pipeline {
   }
 
   environment {
-    // Never hardcode secrets here. Configure OPENWEATHER_API_KEY in Jenkins Credentials
-    // and map it via "Credentials Binding" (recommended) in a real pipeline.
     NODE_ENV = "test"
   }
 
   stages {
     stage('Install') {
       steps {
-        bat 'node -v'
-        bat 'npm -v'
-        bat 'npm install'
+        sh 'node -v'
+        sh 'npm -v'
+        sh 'npm install'
       }
     }
 
