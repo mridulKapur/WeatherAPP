@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 
 const LS_KEY = "weather:lastForecast";
 
@@ -49,19 +49,25 @@ export default function App() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
 
-  const cached = useMemo(() => loadLocal(), []);
-
   const run = async () => {
+    const trimmedCity = city.trim();
+    const cached = loadLocal();
+    if (cached?.payload && cached.payload.city?.toLowerCase() === trimmedCity.toLowerCase()) {
+      setResult(cached.payload);
+      return;
+    }
+
     setLoading(true);
     setError("");
     try {
-      const payload = await fetchForecast({ city: city.trim(), offline });
+      const payload = await fetchForecast({ city: trimmedCity, offline });
       setResult(payload);
       saveLocal(payload);
     } catch (e) {
-      if (offline && cached?.payload) {
+      const fallback = loadLocal();
+      if (offline && fallback?.payload) {
         setResult({
-          ...cached.payload,
+          ...fallback.payload,
           source: { mode: "offline", provider: "cache" },
           _uiNote: "Showing the last saved result from this browser."
         });

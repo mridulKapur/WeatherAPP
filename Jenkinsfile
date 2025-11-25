@@ -1,43 +1,48 @@
+// Requires: Jenkins "Node.js" plugin + a NodeJS installation named "Node.js" in Global Tool Configuration.
+// For Windows agents: install Node.js on the agent and ensure it is in PATH, or use a Linux agent.
 pipeline {
   agent any
 
   options {
-    timestamps()
     disableConcurrentBuilds()
   }
 
   environment {
-    // Never hardcode secrets here. Configure OPENWEATHER_API_KEY in Jenkins Credentials
-    // and map it via "Credentials Binding" (recommended) in a real pipeline.
     NODE_ENV = "test"
   }
 
   stages {
     stage('Install') {
       steps {
-        bat 'node -v'
-        bat 'npm -v'
-        bat 'npm install'
+        nodejs(nodeJSInstallationName: 'NodeJS') {
+          sh 'node -v'
+          sh 'npm -v'
+          sh 'npm install'
+        }
       }
     }
 
     stage('Quality') {
       steps {
-        bat 'npm run lint'
-        bat 'npm test'
+        nodejs(nodeJSInstallationName: 'NodeJS') {
+          sh 'npm run lint'
+          sh 'npm test'
+        }
       }
     }
 
     stage('Build') {
       steps {
-        bat 'npm run build'
+        nodejs(nodeJSInstallationName: 'NodeJS') {
+          sh 'npm run build'
+        }
       }
     }
 
     stage('Docker Build') {
       steps {
-        bat 'docker version'
-        bat 'docker build -t weatherapi-showcase:local .'
+        sh 'docker version'
+        sh 'docker build -t weatherapi-showcase:local .'
       }
     }
   }
