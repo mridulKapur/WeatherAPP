@@ -1,7 +1,15 @@
-// Requires: Jenkins "Node.js" plugin + a NodeJS installation named "Node.js" in Global Tool Configuration.
-// For Windows agents: install Node.js on the agent and ensure it is in PATH, or use a Linux agent.
+// Runs in a Docker container with Node 25 and required libs (avoids libatomic.so.1 issues on minimal Jenkins images).
+// Requires: Jenkins with Docker Pipeline plugin; Docker available to Jenkins (e.g. Docker socket mounted).
+// Alternative: To run on "agent any" with Node.js plugin, your Jenkins image must have libatomic1 installed
+//   (e.g. in your Jenkins Dockerfile: RUN apt-get update && apt-get install -y libatomic1).
 pipeline {
-  agent any
+  agent {
+    docker {
+      image 'node:25'
+      reuseNode true
+      args '-v /var/run/docker.sock:/var/run/docker.sock'
+    }
+  }
 
   options {
     disableConcurrentBuilds()
@@ -12,90 +20,36 @@ pipeline {
   }
 
   stages {
-    stage('Prepare') {
-      steps {
-        sh '''
-          echo "[DEBUG] === Prepare stage ==="
-          echo "[DEBUG] Agent hostname: $(hostname)"
-          echo "[DEBUG] uname -a: $(uname -a)"
-          echo "[DEBUG] User: $(whoami), uid=$(id -u), HOME=$HOME"
-          echo "[DEBUG] Installing libatomic for Node.js 25 (libatomic.so.1)..."
-          set +e
-          if command -v apt-get >/dev/null 2>&1; then
-            echo "[DEBUG] Using apt-get (Debian/Ubuntu)"
-            if [ "$(id -u)" = "0" ]; then
-              echo "[DEBUG] Running as root, using apt-get without sudo"
-              apt-get update -qq && apt-get install -y libatomic1; RC=$?
-            else
-              echo "[DEBUG] Not root, trying sudo apt-get"
-              sudo apt-get update -qq && sudo apt-get install -y libatomic1; RC=$?
-            fi
-            echo "[DEBUG] apt-get exit code: $RC"
-          elif command -v apk >/dev/null 2>&1; then
-            echo "[DEBUG] Using apk (Alpine)"
-            if [ "$(id -u)" = "0" ]; then
-              apk add --no-cache libatomic1 || apk add --no-cache libatomic; RC=$?
-            else
-              sudo apk add --no-cache libatomic1 || sudo apk add --no-cache libatomic; RC=$?
-            fi
-            echo "[DEBUG] apk exit code: $RC"
-          elif command -v yum >/dev/null 2>&1; then
-            echo "[DEBUG] Using yum (RHEL/CentOS)"
-            if [ "$(id -u)" = "0" ]; then
-              yum install -y libatomic; RC=$?
-            else
-              sudo yum install -y libatomic; RC=$?
-            fi
-            echo "[DEBUG] yum exit code: $RC"
-          else
-            echo "[DEBUG] No apt-get, apk, or yum found"
-            RC=1
-          fi
-          set -e
-          if [ -n "$(ldconfig -p 2>/dev/null | grep libatomic)" ] || [ -f /usr/lib/x86_64-linux-gnu/libatomic.so.1 ] || [ -f /lib/x86_64-linux-gnu/libatomic.so.1 ]; then
-            echo "[DEBUG] libatomic.so.1 appears to be available"
-          else
-            echo "[DEBUG] WARNING: libatomic may not be installed (exit $RC). Node 25 may fail with 'libatomic.so.1' error."
-          fi
-          echo "[DEBUG] === Prepare done ==="
-        '''
-      }
-    }
-
     stage('Install') {
       steps {
-        nodejs(nodeJSInstallationName: 'NodeJS') {
-          sh '''
-            echo "[DEBUG] === Install stage ==="
-            echo "[DEBUG] PATH=$PATH"
-            echo "[DEBUG] which node: $(which node 2>/dev/null || echo 'not found')"
-            echo "[DEBUG] which npm: $(which npm 2>/dev/null || echo 'not found')"
-          '''
-          sh 'node -v'
-          sh 'npm -v'
-          sh '''
-            echo "[DEBUG] Running npm install in $(pwd)"
-            npm install
-            echo "[DEBUG] npm install finished"
-          '''
-        }
+        sh '''
+          echo "[DEBUG] === Install stage ==="
+          echo "[DEBUG] hostname: $(hostname), user: $(whoami), uid=$(id -u)"
+          echo "[DEBUG] PATH=$PATH"
+          echo "[DEBUG] which node: $(which node), node: $(node -v)"
+          echo "[DEBUG] which npm: $(which npm), npm: $(npm -v)"
+          echo "[DEBUG] cwd: $(pwd)"
+        '''
+        sh 'node -v'
+        sh 'npm -v'
+        sh '''
+          echo "[DEBUG] Running npm install"
+          npm install
+          echo "[DEBUG] npm install finished"
+        '''
       }
     }
 
     stage('Quality') {
       steps {
-        nodejs(nodeJSInstallationName: 'NodeJS') {
-          sh 'echo "[DEBUG] === Quality stage ===" && npm run lint'
-          sh 'echo "[DEBUG] Running npm test" && npm test'
-        }
+        sh 'echo "[DEBUG] === Quality stage ===" && npm run lint'
+        sh 'echo "[DEBUG] Running npm test" && npm test'
       }
     }
 
     stage('Build') {
       steps {
-        nodejs(nodeJSInstallationName: 'NodeJS') {
-          sh 'echo "[DEBUG] === Build stage ===" && npm run build'
-        }
+        sh 'echo "[DEBUG] === Build stage ===" && npm run build'
       }
     }
 
@@ -114,4 +68,3 @@ pipeline {
     }
   }
 }
-
