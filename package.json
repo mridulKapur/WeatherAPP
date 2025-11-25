@@ -1,0 +1,19 @@
+{
+  "name": "weatherapi-showcase",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Full-stack weather forecast microservice + UI showcase (patterns, tests, Docker, Jenkins).",
+  "workspaces": [
+    "services/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @weather/api & npm run dev -w @weather/web",
+    "build": "npm run build -ws",
+    "test": "npm run test -ws",
+    "lint": "npm run lint -ws"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1"
+  }
+}

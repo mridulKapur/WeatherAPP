@@ -1,0 +1,45 @@
+{
+  "cities": {
+    "london": {
+      "city": { "name": "London", "country": "GB" },
+      "list": [
+        {
+          "dt_txt": "2026-02-20 00:00:00",
+          "main": { "temp_min": 275.15, "temp_max": 279.15 },
+          "weather": [{ "main": "Rain" }],
+          "wind": { "speed": 6.0 }
+        },
+        {
+          "dt_txt": "2026-02-20 12:00:00",
+          "main": { "temp_min": 278.15, "temp_max": 282.15 },
+          "weather": [{ "main": "Clouds" }],
+          "wind": { "speed": 4.0 }
+        },
+        {
+          "dt_txt": "2026-02-21 00:00:00",
+          "main": { "temp_min": 276.15, "temp_max": 280.15 },
+          "weather": [{ "main": "Thunderstorm" }],
+          "wind": { "speed": 8.0 }
+        },
+        {
+          "dt_txt": "2026-02-21 12:00:00",
+          "main": { "temp_min": 279.15, "temp_max": 283.15 },
+          "weather": [{ "main": "Rain" }],
+          "wind": { "speed": 7.5 }
+        },
+        {
+          "dt_txt": "2026-02-22 00:00:00",
+          "main": { "temp_min": 277.15, "temp_max": 281.15 },
+          "weather": [{ "main": "Clear" }],
+          "wind": { "speed": 5.0 }
+        },
+        {
+          "dt_txt": "2026-02-22 12:00:00",
+          "main": { "temp_min": 281.15, "temp_max": 285.15 },
+          "weather": [{ "main": "Clear" }],
+          "wind": { "speed": 5.5 }
+        }
+      ]
+    }
+  }
+}
